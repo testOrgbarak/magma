@@ -124,7 +124,7 @@ jobs:
         run: |
           golangci-lint run --config=../../.golangci.yml --out-format=line-number > ../../golangci-results.txt 2>&1 || true
       - name: Upload golangci-lint results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: golangci-results
           path: golangci-results.txt
@@ -137,7 +137,7 @@ jobs:
       contents: read
     steps:
       - name: Download golangci-lint results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: golangci-results
       - name: Setup reviewdog
@@ -199,7 +199,7 @@ jobs:
       - name: Save PR number
         run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
       - name: Upload eslint results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: eslint-results
           path: |
@@ -215,7 +215,7 @@ jobs:
       contents: read
     steps:
       - name: Download eslint results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: eslint-results
       - name: Setup reviewdog
@@ -296,7 +296,7 @@ jobs:
         run: |
           mypy . --ignore-missing-imports 2>&1 | tee mypy-results.txt || true
       - name: Upload mypy results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mypy-results
           path: mypy-results.txt
@@ -310,7 +310,7 @@ jobs:
       contents: read
     steps:
       - name: Download mypy results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: mypy-results
       - name: Setup reviewdog
@@ -402,7 +402,7 @@ jobs:
             touch wemake-results.txt
           fi
       - name: Upload wemake results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wemake-results
           path: wemake-results.txt
@@ -416,7 +416,7 @@ jobs:
       contents: read
     steps:
       - name: Download wemake results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: wemake-results
       - name: Setup reviewdog
