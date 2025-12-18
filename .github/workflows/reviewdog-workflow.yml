@@ -98,8 +98,7 @@ jobs:
             "
           reviewdog_flags: -fail-on-error
 
-  # Split into two jobs for security: golangci-lint-run runs untrusted code without write permissions,
-  # golangci-lint-report posts results with write permissions but doesn't execute untrusted code.
+  # Runs untrusted code without write permissions. Results posted by lint-report job.
   golangci-lint-run:
     needs: files_changed
     if: ${{ needs.files_changed.outputs.changed_go == 'true' }}
@@ -124,29 +123,10 @@ jobs:
         run: |
           golangci-lint run --config=../../.golangci.yml --out-format=line-number > ../../golangci-results.txt 2>&1 || true
       - name: Upload golangci-lint results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: golangci-results
           path: golangci-results.txt
-
-  golangci-lint-report:
-    needs: golangci-lint-run
-    runs-on: ubuntu-22.04
-    permissions:
-      pull-requests: write
-      contents: read
-    steps:
-      - name: Download golangci-lint results
-        uses: actions/download-artifact@v3
-        with:
-          name: golangci-results
-      - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1
-      - name: Post golangci-lint results
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cat golangci-results.txt | reviewdog -efm="%f:%l:%c: %m" -name="golangci-lint" -reporter=github-pr-review -filter-mode=added
 
   hadolint:
     name: dockerfile-lint
@@ -170,8 +150,7 @@ jobs:
           # Ignore DL3005-"Do not use apt-get upgrade or dist-upgrade"
           hadolint_ignore: DL3005
 
-  # Split into two jobs for security: eslint-lint runs untrusted code without write permissions,
-  # eslint-report posts results with write permissions but doesn't execute untrusted code.
+  # Runs untrusted code without write permissions. Results posted by lint-report job.
   eslint-lint:
     needs: files_changed
     if: ${{ needs.files_changed.outputs.changed_javascript == 'true' }}
@@ -199,32 +178,12 @@ jobs:
       - name: Save PR number
         run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
       - name: Upload eslint results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: eslint-results
           path: |
             eslint-results.json
             pr_number.txt
-
-  eslint-report:
-    needs: eslint-lint
-    name: eslint-report
-    runs-on: ubuntu-22.04
-    permissions:
-      pull-requests: write
-      contents: read
-    steps:
-      - name: Download eslint results
-        uses: actions/download-artifact@v3
-        with:
-          name: eslint-results
-      - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1
-      - name: Post eslint results
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cat eslint-results.json | reviewdog -f=eslint -reporter=github-pr-review -filter-mode=added
 
   markdownlint:
     name: markdownlint
@@ -271,8 +230,7 @@ jobs:
           exclude: |
             ./nms/yarn.lock
 
-  # Split into two jobs for security: mypy-lint runs untrusted code without write permissions,
-  # mypy-report posts results with write permissions but doesn't execute untrusted code.
+  # Runs untrusted code without write permissions. Results posted by lint-report job.
   mypy-lint:
     needs: files_changed
     if: ${{ needs.files_changed.outputs.changed_python == 'true' }}
@@ -296,30 +254,10 @@ jobs:
         run: |
           mypy . --ignore-missing-imports 2>&1 | tee mypy-results.txt || true
       - name: Upload mypy results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mypy-results
           path: mypy-results.txt
-
-  mypy-report:
-    needs: mypy-lint
-    name: mypy-report
-    runs-on: ubuntu-22.04
-    permissions:
-      pull-requests: write
-      contents: read
-    steps:
-      - name: Download mypy results
-        uses: actions/download-artifact@v3
-        with:
-          name: mypy-results
-      - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1
-      - name: Post mypy results
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cat mypy-results.txt | reviewdog -efm="%f:%l: %m" -name="mypy" -reporter=github-pr-review -filter-mode=file
 
   shellcheck:
     name: shellcheck
@@ -364,8 +302,7 @@ jobs:
           fail_on_error: true
           level: info
 
-  # Split into two jobs for security: wemake-lint runs untrusted code without write permissions,
-  # wemake-report posts results with write permissions but doesn't execute untrusted code.
+  # Runs untrusted code without write permissions. Results posted by lint-report job.
   wemake-lint:
     needs: files_changed
     if: ${{ needs.files_changed.outputs.changed_python == 'true' }}
@@ -402,35 +339,10 @@ jobs:
             touch wemake-results.txt
           fi
       - name: Upload wemake results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wemake-results
           path: wemake-results.txt
-
-  wemake-report:
-    needs: wemake-lint
-    name: wemake-report
-    runs-on: ubuntu-22.04
-    permissions:
-      pull-requests: write
-      contents: read
-    steps:
-      - name: Download wemake results
-        uses: actions/download-artifact@v3
-        with:
-          name: wemake-results
-      - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1
-      - name: Post wemake results
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cat wemake-results.txt | reviewdog -efm="%f:%l:%c: %m" -name="wemake-python-styleguide" -reporter=github-pr-review -filter-mode=added
-      - name: Info for local execution
-        if: failure()
-        run: |
-          echo "Running linting tools failed. This should be equivalent to running './lte/gateway/python/precommit.py --lint --diff' locally."
-          exit 1
 
   yamllint:
     name: yamllint
@@ -452,3 +364,47 @@ jobs:
           reporter: github-pr-review
           level: warning
           yamllint_flags: "-d .github/workflows/config/yamllint_config.yml ."
+
+  # Consolidated report job for all split lint jobs
+  # Posts results with write permissions but doesn't execute untrusted code
+  lint-report:
+    needs: [eslint-lint, golangci-lint-run, mypy-lint, wemake-lint]
+    if: always()
+    name: lint-report
+    runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout for reviewdog
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3.1.0
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@v1
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: results/
+      - name: Post eslint results
+        if: hashFiles('results/eslint-results/eslint-results.json') != ''
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat results/eslint-results/eslint-results.json | reviewdog -f=eslint -reporter=github-pr-review -filter-mode=added || true
+      - name: Post golangci-lint results
+        if: hashFiles('results/golangci-results/golangci-results.txt') != ''
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat results/golangci-results/golangci-results.txt | reviewdog -efm="%f:%l:%c: %m" -name="golangci-lint" -reporter=github-pr-review -filter-mode=added || true
+      - name: Post mypy results
+        if: hashFiles('results/mypy-results/mypy-results.txt') != ''
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat results/mypy-results/mypy-results.txt | reviewdog -efm="%f:%l: %m" -name="mypy" -reporter=github-pr-review -filter-mode=file || true
+      - name: Post wemake results
+        if: hashFiles('results/wemake-results/wemake-results.txt') != ''
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat results/wemake-results/wemake-results.txt | reviewdog -efm="%f:%l:%c: %m" -name="wemake-python-styleguide" -reporter=github-pr-review -filter-mode=added || true
