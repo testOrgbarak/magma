@@ -1,4 +1,4 @@
-# orc8r-aws
+# orc8r-aws 
 
 A terraform module to create an Orchestrator deployment in AWS. This module
 will create the infrastructure components (EKS, RDS, Elasticsearch, etc.)
