@@ -98,5 +98,5 @@ require (
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	magma/gateway v0.0.0 // indirect
+	magma/gateway v0.0.0 // indirect 
 )
